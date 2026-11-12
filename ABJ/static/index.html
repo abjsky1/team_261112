@@ -3,43 +3,67 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>다이아몬드 가격 예측</title>
+  <title>Diamond AI · 다이아몬드 가격 감정</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- 상단 소개 영역 -->
-  <header class="hero">
-    <div class="container hero__top">
-      <div class="brand">
-        <svg class="brand__icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M6 3h12l4 6-10 12L2 9z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-          <path d="M2 9h20M9 3l3 18M15 3l-3 18M6 3l3 6M18 3l-3 6" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round" opacity=".7"/>
+  <!-- 배경 효과 : 오로라 + 반짝이는 별 -->
+  <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+  <canvas id="bgCanvas" aria-hidden="true"></canvas>
+
+  <!-- 상단 바 -->
+  <header class="nav">
+    <div class="container nav__inner">
+      <a class="brand" href="#">
+        <svg class="brand__gem" viewBox="0 0 24 24" aria-hidden="true">
+          <defs>
+            <linearGradient id="brandGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#8fd3ff"/><stop offset=".5" stop-color="#b08cff"/><stop offset="1" stop-color="#ffd68a"/>
+            </linearGradient>
+          </defs>
+          <path d="M6 3h12l4 6-10 12L2 9z" fill="none" stroke="url(#brandGrad)" stroke-width="1.6" stroke-linejoin="round"/>
+          <path d="M2 9h20M9 3l3 18M15 3l-3 18M6 3l3 6M18 3l-3 6" fill="none" stroke="url(#brandGrad)" stroke-width="1" stroke-linejoin="round" opacity=".75"/>
         </svg>
-        <span>Diamond Price AI</span>
-      </div>
+        <span>Diamond<em>AI</em></span>
+      </a>
       <span class="status" id="serverStatus"><i></i><span>예측 대기</span></span>
-    </div>
-    <div class="container hero__text">
-      <h1>내 다이아몬드, 얼마일까요?</h1>
-      <p>캐럿 · 컷 · 컬러 · 투명도(4C)와 크기 정보를 입력하면 머신러닝 모델이 예상 가격을 알려드립니다.</p>
     </div>
   </header>
 
+  <!-- 소개 -->
+  <section class="hero container">
+    <p class="eyebrow">Machine Learning · Diamond Appraisal</p>
+    <h1>AI가 감정하는<br><span class="shine">다이아몬드의 가치</span></h1>
+    <p class="hero__sub">캐럿 · 컷 · 컬러 · 투명도(4C)와 크기를 입력하면, 53,932개의 다이아몬드로 학습한 모델이 예상 가격을 바로 알려드립니다.</p>
+    <ul class="badges">
+      <li><b>R² 0.9207</b>예측 정확도</li>
+      <li><b>53,932</b>학습 데이터</li>
+      <li><b>Ridge</b>GridSearchCV 최적화</li>
+    </ul>
+  </section>
+
   <main class="container layout">
 
-    <!-- 입력 폼 -->
-    <form id="predictForm" class="card form" autocomplete="off">
+    <!-- ================= 입력 폼 ================= -->
+    <form id="predictForm" class="glass spot form" autocomplete="off">
+      <div class="form__head">
+        <h2>다이아몬드 정보 입력</h2>
+        <p>값을 바꿀 때마다 감정서의 다이아몬드가 실시간으로 변합니다</p>
+      </div>
 
       <!-- 1. 캐럿 -->
       <section class="group">
         <div class="group__head">
           <span class="step">1</span>
-          <h2>캐럿 <small>carat</small></h2>
+          <h3>캐럿 <small>carat</small></h3>
         </div>
         <div class="carat">
-          <input type="range" id="caratRange" min="0.2" max="3" step="0.01" value="0.7" aria-label="캐럿 슬라이더">
+          <input type="range" class="range" id="caratRange" min="0.2" max="3" step="0.01" value="0.7" aria-label="캐럿 슬라이더">
           <label class="unit-input carat__input">
             <input type="number" id="carat" name="carat" value="0.7" min="0.01" max="10" step="any" required>
             <span>ct</span>
@@ -52,14 +76,15 @@
       <section class="group">
         <div class="group__head">
           <span class="step">2</span>
-          <h2>컷 등급 <small>cut</small></h2>
+          <h3>컷 등급 <small>cut</small></h3>
+          <span class="group__value" id="cutValue"></span>
         </div>
         <div class="chips chips--cut" role="radiogroup" aria-label="컷 등급">
-          <label class="chip"><input type="radio" name="cut" value="Fair"><span><b>Fair</b><em>보통</em></span></label>
-          <label class="chip"><input type="radio" name="cut" value="Good"><span><b>Good</b><em>양호</em></span></label>
-          <label class="chip"><input type="radio" name="cut" value="Very Good"><span><b>Very Good</b><em>우수</em></span></label>
-          <label class="chip"><input type="radio" name="cut" value="Premium"><span><b>Premium</b><em>프리미엄</em></span></label>
-          <label class="chip"><input type="radio" name="cut" value="Ideal" checked><span><b>Ideal</b><em>최상</em></span></label>
+          <label class="chip"><input type="radio" name="cut" value="Fair"><span><b>Fair</b><em>보통</em><i class="lv" style="--lv:.2"></i></span></label>
+          <label class="chip"><input type="radio" name="cut" value="Good"><span><b>Good</b><em>양호</em><i class="lv" style="--lv:.4"></i></span></label>
+          <label class="chip"><input type="radio" name="cut" value="Very Good"><span><b>Very Good</b><em>우수</em><i class="lv" style="--lv:.6"></i></span></label>
+          <label class="chip"><input type="radio" name="cut" value="Premium"><span><b>Premium</b><em>프리미엄</em><i class="lv" style="--lv:.8"></i></span></label>
+          <label class="chip"><input type="radio" name="cut" value="Ideal" checked><span><b>Ideal</b><em>최상</em><i class="lv" style="--lv:1"></i></span></label>
         </div>
         <p class="hint scale"><span>광채 낮음</span><span>광채 높음</span></p>
       </section>
@@ -68,16 +93,17 @@
       <section class="group">
         <div class="group__head">
           <span class="step">3</span>
-          <h2>컬러 등급 <small>color</small></h2>
+          <h3>컬러 등급 <small>color</small></h3>
+          <span class="group__value" id="colorValue"></span>
         </div>
         <div class="chips chips--color" role="radiogroup" aria-label="컬러 등급">
-          <label class="chip"><input type="radio" name="color" value="D"><span><i style="--tint:#ffffff"></i><b>D</b></span></label>
-          <label class="chip"><input type="radio" name="color" value="E"><span><i style="--tint:#fdfcf8"></i><b>E</b></span></label>
-          <label class="chip"><input type="radio" name="color" value="F"><span><i style="--tint:#fcf9ef"></i><b>F</b></span></label>
-          <label class="chip"><input type="radio" name="color" value="G" checked><span><i style="--tint:#faf4e1"></i><b>G</b></span></label>
-          <label class="chip"><input type="radio" name="color" value="H"><span><i style="--tint:#f8eed0"></i><b>H</b></span></label>
-          <label class="chip"><input type="radio" name="color" value="I"><span><i style="--tint:#f5e6ba"></i><b>I</b></span></label>
-          <label class="chip"><input type="radio" name="color" value="J"><span><i style="--tint:#f1dca1"></i><b>J</b></span></label>
+          <label class="chip"><input type="radio" name="color" value="D"><span><i class="swatch" style="--tint:#f4f8ff"></i><b>D</b></span></label>
+          <label class="chip"><input type="radio" name="color" value="E"><span><i class="swatch" style="--tint:#f6f6f2"></i><b>E</b></span></label>
+          <label class="chip"><input type="radio" name="color" value="F"><span><i class="swatch" style="--tint:#f6f1e0"></i><b>F</b></span></label>
+          <label class="chip"><input type="radio" name="color" value="G" checked><span><i class="swatch" style="--tint:#f5eacb"></i><b>G</b></span></label>
+          <label class="chip"><input type="radio" name="color" value="H"><span><i class="swatch" style="--tint:#f3e1b2"></i><b>H</b></span></label>
+          <label class="chip"><input type="radio" name="color" value="I"><span><i class="swatch" style="--tint:#f0d796"></i><b>I</b></span></label>
+          <label class="chip"><input type="radio" name="color" value="J"><span><i class="swatch" style="--tint:#ecca78"></i><b>J</b></span></label>
         </div>
         <p class="hint scale"><span>D · 완전 무색 (최고)</span><span>J · 옅은 노란빛</span></p>
       </section>
@@ -86,17 +112,18 @@
       <section class="group">
         <div class="group__head">
           <span class="step">4</span>
-          <h2>투명도 <small>clarity</small></h2>
+          <h3>투명도 <small>clarity</small></h3>
+          <span class="group__value" id="clarityValue"></span>
         </div>
         <div class="chips chips--clarity" role="radiogroup" aria-label="투명도 등급">
-          <label class="chip"><input type="radio" name="clarity" value="I1"><span><b>I1</b></span></label>
-          <label class="chip"><input type="radio" name="clarity" value="SI2"><span><b>SI2</b></span></label>
-          <label class="chip"><input type="radio" name="clarity" value="SI1"><span><b>SI1</b></span></label>
-          <label class="chip"><input type="radio" name="clarity" value="VS2" checked><span><b>VS2</b></span></label>
-          <label class="chip"><input type="radio" name="clarity" value="VS1"><span><b>VS1</b></span></label>
-          <label class="chip"><input type="radio" name="clarity" value="VVS2"><span><b>VVS2</b></span></label>
-          <label class="chip"><input type="radio" name="clarity" value="VVS1"><span><b>VVS1</b></span></label>
-          <label class="chip"><input type="radio" name="clarity" value="IF"><span><b>IF</b></span></label>
+          <label class="chip"><input type="radio" name="clarity" value="I1"><span><b>I1</b><i class="lv" style="--lv:.125"></i></span></label>
+          <label class="chip"><input type="radio" name="clarity" value="SI2"><span><b>SI2</b><i class="lv" style="--lv:.25"></i></span></label>
+          <label class="chip"><input type="radio" name="clarity" value="SI1"><span><b>SI1</b><i class="lv" style="--lv:.375"></i></span></label>
+          <label class="chip"><input type="radio" name="clarity" value="VS2" checked><span><b>VS2</b><i class="lv" style="--lv:.5"></i></span></label>
+          <label class="chip"><input type="radio" name="clarity" value="VS1"><span><b>VS1</b><i class="lv" style="--lv:.625"></i></span></label>
+          <label class="chip"><input type="radio" name="clarity" value="VVS2"><span><b>VVS2</b><i class="lv" style="--lv:.75"></i></span></label>
+          <label class="chip"><input type="radio" name="clarity" value="VVS1"><span><b>VVS1</b><i class="lv" style="--lv:.875"></i></span></label>
+          <label class="chip"><input type="radio" name="clarity" value="IF"><span><b>IF</b><i class="lv" style="--lv:1"></i></span></label>
         </div>
         <p class="hint scale"><span>I1 · 내포물 많음</span><span>IF · 내부 무결점</span></p>
       </section>
@@ -105,7 +132,7 @@
       <section class="group">
         <div class="group__head">
           <span class="step">5</span>
-          <h2>비율 · 크기</h2>
+          <h3>비율 · 크기</h3>
         </div>
         <div class="grid-2">
           <div class="field">
@@ -145,76 +172,206 @@
 
       <div class="actions">
         <button type="submit" class="btn btn--primary" id="submitBtn">
-          <span class="spinner" aria-hidden="true"></span>
-          <span class="btn__label">예상 가격 확인</span>
+          <svg class="btn-gem" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 3h12l4 6-10 12L2 9z M2 9h20 M9 3l3 18 M15 3l-3 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          </svg>
+          <span class="btn__label">AI 감정 시작</span>
         </button>
-        <button type="button" class="btn btn--ghost" id="exampleBtn">예시값 채우기</button>
+        <button type="button" class="btn btn--ghost" id="exampleBtn">✦ 예시 다이아몬드</button>
         <button type="reset" class="btn btn--text">초기화</button>
       </div>
       <p class="example-note" id="exampleNote" hidden></p>
     </form>
 
-    <!-- 결과 + 성능 지표 -->
-    <aside class="side">
+    <!-- ================= 감정 결과 ================= -->
+    <aside class="glass spot showcase" id="resultCard" aria-live="polite">
+      <div class="showcase__head">
+        <h2>AI 감정서 <em>Appraisal</em></h2>
+        <span class="stale-badge">입력값 변경됨 · 다시 감정해주세요</span>
+      </div>
 
-      <section class="card result" id="resultCard" aria-live="polite">
-        <p class="eyebrow">예상 가격 <span class="stale-badge">입력값 변경됨 · 다시 확인해주세요</span></p>
+      <!-- 다이아몬드 무대 (입력값에 따라 크기 / 색 / 반짝임 변화) -->
+      <div class="stage" id="stage">
+        <div class="stage__rays"></div>
+        <div class="stage__glow"></div>
+        <div class="stage__floor"></div>
+        <div class="stage__ring"></div>
+        <div class="stage__toast" id="stageToast"></div>
+        <div class="gem-tilt">
+          <div class="gem-pop" id="gemPop">
+          <div class="gem-float">
+            <svg id="gemSvg" viewBox="-30 -24 260 222" aria-label="다이아몬드 미리보기" role="img">
+              <defs>
+                <linearGradient id="gA" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#cfe2ff"/>
+                </linearGradient>
+                <linearGradient id="gB" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#e6eeff"/><stop offset="1" stop-color="#93b2ff"/>
+                </linearGradient>
+                <linearGradient id="gC" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#aec2ff"/><stop offset="1" stop-color="#5d62d6"/>
+                </linearGradient>
+                <linearGradient id="gFire" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#ff5f8f"/><stop offset=".2" stop-color="#ffd166"/>
+                  <stop offset=".4" stop-color="#6dffb0"/><stop offset=".6" stop-color="#5fd1ff"/>
+                  <stop offset=".8" stop-color="#a77bff"/><stop offset="1" stop-color="#ff5f8f"/>
+                </linearGradient>
+                <linearGradient id="gSweep" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+                  <stop offset=".5" stop-color="#fff" stop-opacity=".9"/>
+                  <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+                </linearGradient>
+                <clipPath id="gemClip"><polygon points="50,24 150,24 192,64 100,176 8,64"/></clipPath>
+                <!-- 투명도(clarity)가 낮을수록 흐릿하게 -->
+                <filter id="hazeFilter" x="-10%" y="-10%" width="120%" height="120%">
+                  <feGaussianBlur id="hazeBlur" stdDeviation="0"/>
+                </filter>
+              </defs>
 
-        <div class="result__empty" id="resultEmpty">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M6 3h12l4 6-10 12L2 9z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
-            <path d="M2 9h20M9 3l3 18M15 3l-3 18" fill="none" stroke="currentColor" stroke-width=".9" opacity=".6"/>
-          </svg>
-          <p>정보를 입력하고 <b>예상 가격 확인</b>을 눌러주세요.</p>
-        </div>
+              <!-- 주변 반짝이 (투명도 등급이 높을수록 진하게) -->
+              <g class="sparkles">
+                <g transform="translate(26,6)"><path class="star" style="--s:1;animation-delay:0s" d="M0,-12 L2.4,-2.4 L12,0 L2.4,2.4 L0,12 L-2.4,2.4 L-12,0 L-2.4,-2.4Z"/></g>
+                <g transform="translate(176,10)"><path class="star" style="--s:.8;animation-delay:.9s" d="M0,-12 L2.4,-2.4 L12,0 L2.4,2.4 L0,12 L-2.4,2.4 L-12,0 L-2.4,-2.4Z"/></g>
+                <g transform="translate(214,78)"><path class="star" style="--s:1.1;animation-delay:1.7s" d="M0,-12 L2.4,-2.4 L12,0 L2.4,2.4 L0,12 L-2.4,2.4 L-12,0 L-2.4,-2.4Z"/></g>
+                <g transform="translate(-12,98)"><path class="star" style="--s:.9;animation-delay:.5s" d="M0,-12 L2.4,-2.4 L12,0 L2.4,2.4 L0,12 L-2.4,2.4 L-12,0 L-2.4,-2.4Z"/></g>
+                <g transform="translate(170,150)"><path class="star" style="--s:.7;animation-delay:2.2s" d="M0,-12 L2.4,-2.4 L12,0 L2.4,2.4 L0,12 L-2.4,2.4 L-12,0 L-2.4,-2.4Z"/></g>
+                <g transform="translate(100,-12)"><path class="star" style="--s:.6;animation-delay:1.3s" d="M0,-12 L2.4,-2.4 L12,0 L2.4,2.4 L0,12 L-2.4,2.4 L-12,0 L-2.4,-2.4Z"/></g>
+                <g transform="translate(28,150)"><path class="star" style="--s:.55;animation-delay:2.6s" d="M0,-12 L2.4,-2.4 L12,0 L2.4,2.4 L0,12 L-2.4,2.4 L-12,0 L-2.4,-2.4Z"/></g>
+              </g>
 
-        <div class="result__body" id="resultBody" hidden>
-          <p class="price" id="priceValue">$0</p>
-          <p class="price-sub" id="priceSub"></p>
-          <p class="actual" id="actualPrice" hidden></p>
-          <ul class="summary" id="summary"></ul>
-          <ul class="warnings" id="warnings"></ul>
-        </div>
-
-        <p class="error" id="errorMsg" hidden></p>
-      </section>
-
-      <section class="card metrics">
-        <div class="metrics__head">
-          <h2>모델 성능 지표</h2>
-          <span id="testCount">테스트 데이터 기준</span>
-        </div>
-
-        <div class="metric metric--wide">
-          <div class="metric__top">
-            <span class="metric__name">R² <em>결정계수</em></span>
-            <strong id="r2Value">-</strong>
+              <!-- 다이아몬드 본체 -->
+              <g clip-path="url(#gemClip)">
+                <g id="facets" filter="url(#hazeFilter)"></g>
+                <polygon class="tint" points="50,24 150,24 192,64 100,176 8,64"/>
+                <polygon class="haze" points="50,24 150,24 192,64 100,176 8,64"/>
+                <rect class="fire" x="-60" y="0" width="320" height="180" fill="url(#gFire)"/>
+                <g id="flashes"></g>
+                <g id="specks">
+                  <circle class="speck" cx="78" cy="96" r="2.6"/>
+                  <circle class="speck" cx="122" cy="110" r="2.1"/>
+                  <circle class="speck" cx="98" cy="136" r="1.9"/>
+                  <circle class="speck" cx="134" cy="82" r="1.7"/>
+                  <circle class="speck" cx="64" cy="76" r="1.6"/>
+                </g>
+                <g transform="skewX(-18)"><rect class="sweep" x="-60" y="0" width="46" height="190" fill="url(#gSweep)"/></g>
+              </g>
+              <polygon class="outline" points="50,24 150,24 192,64 100,176 8,64"/>
+              <line class="girdle" x1="8" y1="64" x2="192" y2="64"/>
+            </svg>
           </div>
-          <div class="bar"><span id="r2Bar"></span></div>
-          <p class="metric__desc" id="r2Desc">1에 가까울수록 가격을 잘 설명하는 모델입니다.</p>
-        </div>
-
-        <div class="metric-row">
-          <div class="metric">
-            <span class="metric__name">RMSE <em>평균 제곱근 오차</em></span>
-            <strong id="rmseValue">-</strong>
-            <p class="metric__desc">큰 오차에 더 민감한 오차 지표</p>
-          </div>
-          <div class="metric">
-            <span class="metric__name">MAE <em>평균 절대 오차</em></span>
-            <strong id="maeValue">-</strong>
-            <p class="metric__desc">예측이 평균적으로 벗어나는 금액</p>
           </div>
         </div>
+        <canvas id="burstCanvas" aria-hidden="true"></canvas>
+      </div>
 
-        <p class="metrics__foot" id="modelName">모델 정보를 불러오는 중입니다.</p>
-      </section>
+      <!-- 다이아몬드 상태 게이지 (값을 바꾸면 실시간으로 변화) -->
+      <div class="gem-stats">
+        <div class="gs"><span>크기</span><b id="gsSize">0.70ct</b><i><em id="gsSizeBar"></em></i></div>
+        <div class="gs"><span>광채</span><b id="gsCut">Ideal</b><i><em id="gsCutBar"></em></i></div>
+        <div class="gs"><span>무색도</span><b id="gsColor">G</b><i><em id="gsColorBar"></em></i></div>
+        <div class="gs"><span>선명도</span><b id="gsClarity">VS2</b><i><em id="gsClarityBar"></em></i></div>
+      </div>
 
+      <div class="price-block">
+        <p class="price-label">예상 감정가</p>
+        <p class="price is-empty" id="priceValue">$ —</p>
+        <p class="price-sub" id="priceSub"></p>
+      </div>
+
+      <div class="gauge" id="gauge" hidden>
+        <div class="gauge__top">
+          <span>데이터셋 53,932개 가격 분포 속 위치</span>
+          <span class="rank" id="rankBadge">-</span>
+        </div>
+        <div class="gauge__track">
+          <span class="gauge__band" id="gaugeBand"></span>
+          <span class="gauge__marker" id="gaugeMarker"></span>
+        </div>
+        <div class="gauge__labels"><span>$326</span><span>중앙값 $2,401</span><span>$18,823</span></div>
+      </div>
+
+      <p class="actual" id="actualPrice" hidden></p>
+      <ul class="summary" id="summary"></ul>
+      <ul class="warnings" id="warnings"></ul>
+      <p class="error" id="errorMsg" hidden></p>
     </aside>
   </main>
 
+  <!-- ================= 모델 성능 ================= -->
+  <section class="container metrics" id="metrics">
+    <div class="section-head">
+      <p class="eyebrow">Model Performance</p>
+      <h2>모델 성능 지표</h2>
+      <p id="testCount">테스트 데이터 기준</p>
+    </div>
+
+    <div class="metric-grid">
+      <article class="glass spot metric metric--r2">
+        <div class="ring-wrap">
+          <svg class="ring" viewBox="0 0 140 140" aria-hidden="true">
+            <defs>
+              <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#8fd3ff"/><stop offset=".5" stop-color="#b08cff"/><stop offset="1" stop-color="#ffd68a"/>
+              </linearGradient>
+            </defs>
+            <circle class="ring__bg" cx="70" cy="70" r="58"/>
+            <circle class="ring__fg" id="r2Ring" cx="70" cy="70" r="58"/>
+          </svg>
+          <div class="ring__center"><strong id="r2Value">0.0000</strong><span>R² SCORE</span></div>
+        </div>
+        <h3>결정계수 R²</h3>
+        <p id="r2Desc"></p>
+      </article>
+
+      <article class="glass spot metric">
+        <span class="metric__tag">RMSE</span>
+        <strong class="metric__num" id="rmseValue">$0</strong>
+        <h3>평균 제곱근 오차</h3>
+        <p>큰 오차에 더 민감한 지표 · 낮을수록 정확</p>
+        <div class="mini-bar"><span id="rmseBar"></span></div>
+        <p class="mini-cap" id="rmseCap"></p>
+      </article>
+
+      <article class="glass spot metric">
+        <span class="metric__tag">MAE</span>
+        <strong class="metric__num" id="maeValue">$0</strong>
+        <h3>평균 절대 오차</h3>
+        <p>예측이 평균적으로 벗어나는 금액</p>
+        <div class="mini-bar"><span id="maeBar"></span></div>
+        <p class="mini-cap" id="maeCap"></p>
+      </article>
+    </div>
+
+    <!-- 머신러닝 파이프라인 흐름 -->
+    <div class="glass pipeline">
+      <div class="pipe">
+        <span class="pipe__k">INPUT</span>
+        <b>8개 특성</b>
+        <em>carat · cut · color · clarity · depth · table · x · y</em>
+      </div>
+      <i class="pipe__arrow" aria-hidden="true"></i>
+      <div class="pipe">
+        <span class="pipe__k">PREPROCESS</span>
+        <b>ColumnTransformer</b>
+        <em>StandardScaler (수치 5) + OneHotEncoder (범주 3)</em>
+      </div>
+      <i class="pipe__arrow" aria-hidden="true"></i>
+      <div class="pipe">
+        <span class="pipe__k">MODEL</span>
+        <b id="modelName">Ridge</b>
+        <em>GridSearchCV · 5-Fold 교차검증</em>
+      </div>
+      <i class="pipe__arrow" aria-hidden="true"></i>
+      <div class="pipe pipe--out">
+        <span class="pipe__k">OUTPUT</span>
+        <b>예상 가격 (USD)</b>
+        <em>저장된 best_model.pkl 로 추론</em>
+      </div>
+    </div>
+  </section>
+
   <footer class="container footer">
-    diamonds.csv (53,932건) · StandardScaler + OneHotEncoder + Ridge 파이프라인 · GridSearchCV 5-Fold 최적화 · 가격 단위 USD
+    diamonds.csv · Pipeline(ColumnTransformer + Ridge) · FastAPI + axios · 가격 단위 USD
   </footer>
 
   <!-- axios : 비동기 통신 라이브러리 -->

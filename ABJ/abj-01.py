@@ -48,12 +48,7 @@ best_score = grid.best_score_
 print(best_params)
 print(best_score)
 
-
-import joblib
-joblib.dump(best_pipe , './best_model.pkl')
-
-best_model = joblib.load('./best_model.pkl')
-Y_pred =  best_model.predict(X_test)
+Y_pred =  best_pipe.predict(X_test)
 
 import numpy as np
 from sklearn.metrics import r2_score , mean_squared_error , mean_absolute_error
@@ -63,6 +58,15 @@ mae = mean_absolute_error(Y_test, Y_pred)
 print('R2 :', r2)        # 1에 가까울수록 좋음 (요구사항의 회귀 지표)
 print('RMSE :', rmse)    # 평균 오차 (달러)
 print('MAE :', mae)      # 평균 절대 오차 (달러)
+
+
+import joblib
+joblib.dump(best_pipe , './best_model.pkl')
+
+best_model = joblib.load('./best_model.pkl')
+
+
+
 
 
 

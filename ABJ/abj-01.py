@@ -7,8 +7,9 @@ df = pd.read_csv("./dataset/diamonds.csv")
 # z 삭제.
 
 df = df.drop( columns=['Unnamed: 0' , 'z']).reset_index(drop=True)
+df = df[ (df['x'] > 0) & (df['y'] > 0)].reset_index(drop=True)
 # df.head()
-# df.info()
+df.info()
 
 X = df.drop( columns=['price']).copy()
 Y = df['price']
@@ -53,6 +54,15 @@ joblib.dump(best_pipe , './best_model.pkl')
 
 best_model = joblib.load('./best_model.pkl')
 Y_pred =  best_model.predict(X_test)
+
+import numpy as np
+from sklearn.metrics import r2_score , mean_squared_error , mean_absolute_error
+r2 = r2_score(Y_test, Y_pred)
+rmse = np.sqrt( mean_squared_error(Y_test, Y_pred) )
+mae = mean_absolute_error(Y_test, Y_pred)
+print('R2 :', r2)        # 1에 가까울수록 좋음 (요구사항의 회귀 지표)
+print('RMSE :', rmse)    # 평균 오차 (달러)
+print('MAE :', mae)      # 평균 절대 오차 (달러)
 
 
 

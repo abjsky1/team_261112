@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>다이아몬드 가격 예측</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <main class="container">
+        <header class="header">
+            <h1>💎 다이아몬드 가격 예측</h1>
+            <p>다이아몬드 정보를 입력하면 머신러닝 모델(Ridge 회귀)이 예상 가격을 알려줍니다.</p>
+        </header>
+
+        <div class="layout">
+            <!-- 입력 폼 -->
+            <form id="predictForm" class="card" novalidate>
+                <h2>다이아몬드 정보 입력</h2>
+
+                <!-- 수치형 특성 -->
+                <fieldset>
+                    <legend>크기 · 비율</legend>
+
+                    <div class="field">
+                        <label for="carat">캐럿 <span class="unit">(carat)</span></label>
+                        <input type="number" id="carat" name="carat" value="1.0" min="0.2" max="5.01" step="0.01" required>
+                        <small>무게 단위. 1캐럿 = 0.2g · 입력 범위 0.2 ~ 5.01</small>
+                    </div>
+
+                    <div class="row">
+                        <div class="field">
+                            <label for="x">가로 길이 <span class="unit">(x, mm)</span></label>
+                            <input type="number" id="x" name="x" value="6.4" min="0.1" max="10.74" step="0.01" required>
+                            <small>범위 0.1 ~ 10.74</small>
+                        </div>
+                        <div class="field">
+                            <label for="y">세로 길이 <span class="unit">(y, mm)</span></label>
+                            <input type="number" id="y" name="y" value="6.4" min="0.1" max="10.74" step="0.01" required>
+                            <small>범위 0.1 ~ 10.74</small>
+                        </div>
+                    </div>
+                    <p class="hint">참고: 1캐럿 다이아몬드는 보통 가로·세로 약 6.4mm 입니다.</p>
+
+                    <div class="row">
+                        <div class="field">
+                            <label for="depth">깊이 비율 <span class="unit">(depth, %)</span></label>
+                            <input type="number" id="depth" name="depth" value="61.5" min="43" max="79" step="0.1" required>
+                            <small>범위 43 ~ 79 · 평균 61.7</small>
+                        </div>
+                        <div class="field">
+                            <label for="table">테이블 비율 <span class="unit">(table, %)</span></label>
+                            <input type="number" id="table" name="table" value="57" min="43" max="95" step="0.1" required>
+                            <small>범위 43 ~ 95 · 평균 57.5</small>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <!-- 범주형 특성 -->
+                <fieldset>
+                    <legend>등급</legend>
+
+                    <div class="field">
+                        <label for="cut">컷 등급 <span class="unit">(cut)</span></label>
+                        <select id="cut" name="cut" required>
+                            <option value="Fair">Fair (보통)</option>
+                            <option value="Good">Good (좋음)</option>
+                            <option value="Very Good">Very Good (매우 좋음)</option>
+                            <option value="Premium">Premium (프리미엄)</option>
+                            <option value="Ideal" selected>Ideal (최상)</option>
+                        </select>
+                        <small>세공 품질 · 낮음 → 높음 순서</small>
+                    </div>
+
+                    <div class="field">
+                        <label for="color">색상 등급 <span class="unit">(color)</span></label>
+                        <select id="color" name="color" required>
+                            <option value="J">J (노란빛 가장 많음)</option>
+                            <option value="I">I</option>
+                            <option value="H">H</option>
+                            <option value="G" selected>G</option>
+                            <option value="F">F</option>
+                            <option value="E">E</option>
+                            <option value="D">D (가장 투명한 무색)</option>
+                        </select>
+                        <small>무색에 가까울수록 높은 등급 · 낮음 → 높음 순서</small>
+                    </div>
+
+                    <div class="field">
+                        <label for="clarity">투명도 등급 <span class="unit">(clarity)</span></label>
+                        <select id="clarity" name="clarity" required>
+                            <option value="I1">I1 (내포물 많음)</option>
+                            <option value="SI2">SI2</option>
+                            <option value="SI1">SI1</option>
+                            <option value="VS2">VS2</option>
+                            <option value="VS1" selected>VS1</option>
+                            <option value="VVS2">VVS2</option>
+                            <option value="VVS1">VVS1</option>
+                            <option value="IF">IF (내포물 없음)</option>
+                        </select>
+                        <small>내부 흠집이 적을수록 높은 등급 · 낮음 → 높음 순서</small>
+                    </div>
+                </fieldset>
+
+                <p id="formError" class="form-error" role="alert"></p>
+
+                <div class="actions">
+                    <button type="button" id="resetBtn" class="btn btn-secondary">초기화</button>
+                    <button type="submit" id="submitBtn" class="btn btn-primary">가격 예측하기</button>
+                </div>
+            </form>
+
+            <!-- 결과 -->
+            <section class="card result" aria-live="polite">
+                <h2>예측 결과</h2>
+
+                <div id="resultEmpty" class="result-empty">
+                    <div class="result-icon">💎</div>
+                    <p>왼쪽에 정보를 입력하고<br><strong>가격 예측하기</strong>를 눌러 주세요.</p>
+                </div>
+
+                <div id="resultLoading" class="result-loading hidden">
+                    <div class="spinner"></div>
+                    <p>예측 중입니다...</p>
+                </div>
+
+                <div id="resultError" class="result-error hidden">
+                    <p class="result-error-title">예측에 실패했습니다</p>
+                    <p id="resultErrorMsg"></p>
+                </div>
+
+                <div id="resultBox" class="hidden">
+                    <div class="price-box">
+                        <span class="price-label">예상 가격</span>
+                        <span id="priceUsd" class="price-usd">$0</span>
+                        <span id="priceKrw" class="price-krw">약 0원</span>
+                    </div>
+
+                    <div class="metric">
+                        <div class="metric-head">
+                            <span>모델 성능 <strong>R² Score</strong></span>
+                            <span id="r2Value" class="metric-value">0.000</span>
+                        </div>
+                        <div class="bar"><div id="r2Bar" class="bar-fill"></div></div>
+                        <small id="r2Desc">테스트 데이터 기준, 가격 변동의 0%를 설명합니다.</small>
+                    </div>
+
+                    <div class="summary">
+                        <h3>입력한 정보</h3>
+                        <dl id="summaryList"></dl>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <footer class="footer">
+            Kaggle Diamonds 데이터셋 (53,940개) · Pipeline + GridSearchCV · FastAPI
+        </footer>
+    </main>
+
+    <!-- axios : 비동기 HTTP 통신 라이브러리 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.7.7/axios.min.js"></script>
+    <script src="./script.js"></script>
+</body>
+</html>
